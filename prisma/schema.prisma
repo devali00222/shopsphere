@@ -1,0 +1,127 @@
+// ShopSphere - relational schema
+//
+// This lives in Postgres (not MongoDB) because every model here needs one or
+// both of: (1) referential integrity - an order_item must point to a real
+// order and a real product, no orphans - and (2) transactional consistency -
+// checkout must never leave inventory and orders out of sync with each other.
+// See docs/adr/0001-data-store-split.md for the full reasoning.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Users ---------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+// --- Catalog ---------------------------------------------------------------
+
+model Category {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  priceCents  Int      @map("price_cents") // money as integer cents - never float
+  categoryId  String   @map("category_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category   Category    @relation(fields: [categoryId], references: [id])
+  inventory  Inventory?
+  orderItems OrderItem[]
+
+  // Every product is looked up by category constantly (catalog browsing) -
+  // this index is what turns that from a full table scan into an index scan.
+  @@index([categoryId])
+  @@map("products")
+}
+
+// Inventory is its own table, not a column on Product, so that stock
+// updates (frequent, contended) don't take a lock on product metadata
+// (rare writes: name/description/price). Separating hot-write data from
+// cold-write data is a small trade-off now that matters a lot at scale.
+model Inventory {
+  id        String   @id @default(uuid())
+  productId String   @unique @map("product_id")
+  quantity  Int      @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("inventory")
+}
+
+// --- Orders ---------------------------------------------------------------
+
+model Order {
+  id         String      @id @default(uuid())
+  userId     String      @map("user_id")
+  status     OrderStatus @default(PENDING)
+  totalCents Int         @map("total_cents")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  // Order history is always queried "for this user, newest first" - this
+  // composite index matches that access pattern exactly instead of making
+  // Postgres sort after the fact.
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING // created, payment/inventory job not yet finished (see Month 3)
+  PAID
+  FAILED
+  CANCELLED
+}
+
+// Line items are their own table (not a JSON array on Order) so each item
+// can foreign-key to a real product, priced at time-of-purchase - product
+// prices change, but a past order must never silently reprice itself.
+model OrderItem {
+  id             String @id @default(uuid())
+  orderId        String @map("order_id")
+  productId      String @map("product_id")
+  quantity       Int
+  unitPriceCents Int    @map("unit_price_cents") // snapshot of price at purchase time
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
