@@ -1,5 +1,5 @@
 // src/modules/categories/category.routes.ts
-import { Router,Request,Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { validate } from '../../middleware/validate';
 import { createCategorySchema, updateCategorySchema } from './category.schema';
 import * as repo from './category.repository';
@@ -9,22 +9,19 @@ import { NotFoundError } from '../../infra/errors';
 export const categoryRouter = Router();
 
 // GET / - list all. 
-categoryRouter.get('/', asyncHandler(async (_req:Request, res:Response) => {
+categoryRouter.get('/', asyncHandler(async (_req: Request, res: Response) => {
   const categories = await repo.listCategories();
   if (!categories) {
     throw new NotFoundError('Categories');
-  }
-  if (categories.length === 0) {
-    return res.status(200).json([{ message: 'No categories found' }]);
   }
   return res.status(200).json(categories);
 }));
 
 // GET /:id - get one.
-categoryRouter.get('/:id', asyncHandler(async (req:Request, res:Response) => {
-    if(!req.params.id){
-        return res.status(400).json({error: 'Bad Request', message: 'Category ID is required'});
-    }
+categoryRouter.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  if (!req.params.id) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
+  }
   const category = await repo.getCategoryById(req.params.id);
   if (!category) {
     throw new NotFoundError('Category');
@@ -34,31 +31,33 @@ categoryRouter.get('/:id', asyncHandler(async (req:Request, res:Response) => {
 
 // POST / - validate(createCategorySchema) as middleware, then create.
 
-categoryRouter.post('/', validate(createCategorySchema), asyncHandler(async (req:Request, res:Response) => {
+categoryRouter.post('/', validate(createCategorySchema), asyncHandler(async (req: Request, res: Response) => {
   const category = await repo.createCategory(req.body);
   return res.status(201).json(category);
 }));
 
 // PUT /:id - validate(updateCategorySchema), then update.
-categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (req:Request, res:Response) => {
-  if(!req.params.id){
-    return res.status(400).json({error: 'Bad Request', message: 'Category ID is required'});
+categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (req: Request, res: Response) => {
+  if (!req.params.id) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
   }
-  const category = await repo.updateCategory(req.params.id, req.body);
-  if (!category) {
+  const existingCategory = await repo.getCategoryById(req.params.id);
+  if (!existingCategory) {
     throw new NotFoundError('Category');
   }
+  const category = await repo.updateCategory(req.params.id, req.body);
   return res.status(200).json(category);
 }));
 
 // DELETE /:id - what status code, and does the response have a body?
-categoryRouter.delete('/:id', asyncHandler(async (req:Request, res:Response) => {
-  if(!req.params.id){
-    return res.status(400).json({error: 'Bad Request', message: 'Category ID is required'});
+categoryRouter.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  if (!req.params.id) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
   }
-  const category = await repo.deleteCategory(req.params.id);
-  if (!category) {
+  const existingCategory = await repo.getCategoryById(req.params.id);
+  if (!existingCategory) {
     throw new NotFoundError('Category');
   }
-  return res.status(200).json({ message: 'Category deleted successfully' });
+  const category = await repo.deleteCategory(req.params.id);
+  return res.status(200).json(category);
 }));

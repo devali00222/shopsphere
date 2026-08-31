@@ -5,7 +5,7 @@ import type { CreateProductInput } from './product.schema';
 // list all products 
 export async function listProducts() {
   const products = await prisma.product.findMany();
-  if(!products){
+  if (!products) {
     return null
   }
   return products
@@ -15,7 +15,7 @@ export async function listProductsByProductId(productId: string) {
   const products = await prisma.product.findMany({
     where: { id: productId },
   });
-  if(!products){
+  if (!products) {
     return null
   }
   return products

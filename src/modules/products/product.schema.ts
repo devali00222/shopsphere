@@ -35,7 +35,7 @@ export const createProductSchema = z.object({
 
 
 export const updateProductSchema = z.object({
-    name: z
+  name: z
     .string()
     .min(3, {
       message: 'Product name must be at least 3 characters long',
