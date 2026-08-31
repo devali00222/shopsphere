@@ -69,15 +69,23 @@ export const updateProductSchema = z.object({
 export const listProductsQuerySchema = z.object({
   categoryId: z
     .string()
-    .uuid()
-    .optional(),
+    .uuid().optional(),
 
   limit: z
     .coerce
     .number()
     .int()
     .positive()
-    .optional(),
+    .optional()
+    .default(10),
+
+  page: z
+    .coerce
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .default(1),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

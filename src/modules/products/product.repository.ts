@@ -1,23 +1,27 @@
 // src/modules/products/product.repository.ts and product.routes.ts
 import { prisma } from '../../infra/prisma';
-import type { CreateProductInput } from './product.schema';
+import type { CreateProductInput, ListProductsQueryInput } from './product.schema';
 // Same shape as categories - build these yourself now using the category
 // list all products 
 export async function listProducts() {
   const products = await prisma.product.findMany();
-  if (!products) {
-    return null
-  }
   return products
 }
 // list products by product id
 export async function listProductsByProductId(productId: string) {
-  const products = await prisma.product.findMany({
+  const products = await prisma.product.findUnique({
     where: { id: productId },
   });
-  if (!products) {
-    return null
-  }
+  return products
+}
+// list products by category id
+export async function listProductsByCategoryId(input: ListProductsQueryInput) {
+  const { categoryId, limit, page } = input;
+  const products = await prisma.product.findMany({
+    where: { categoryId: categoryId! },
+    skip: (page - 1) * limit,
+    take: limit,
+  });
   return products
 }
 
