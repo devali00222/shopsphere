@@ -18,7 +18,7 @@ export async function listProductsByProductId(productId: string) {
 export async function listProductsByCategoryId(input: ListProductsQueryInput) {
   const { categoryId, limit, page } = input;
   const products = await prisma.product.findMany({
-    where: { categoryId: categoryId! },
+    where: { categoryId },
     skip: (page - 1) * limit,
     take: limit,
   });

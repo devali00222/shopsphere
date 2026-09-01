@@ -69,7 +69,7 @@ export const updateProductSchema = z.object({
 export const listProductsQuerySchema = z.object({
   categoryId: z
     .string()
-    .uuid().optional(),
+    .uuid(),
 
   limit: z
     .coerce
@@ -77,6 +77,7 @@ export const listProductsQuerySchema = z.object({
     .int()
     .positive()
     .max(100)
+    .optional()
     .default(10),
 
   page: z
@@ -84,6 +85,7 @@ export const listProductsQuerySchema = z.object({
     .number()
     .int()
     .positive()
+    .optional()
     .default(1),
 });
 

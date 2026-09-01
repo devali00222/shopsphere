@@ -4,8 +4,6 @@ import { createProductSchema, listProductsQuerySchema, updateProductSchema } fro
 import * as repo from './product.repository';
 import asyncHandler from '../../middleware/asyncHandler';
 import { NotFoundError } from '../../infra/errors';
-import { logger } from '../../infra/logger';
-
 export const productRouter = Router();
 
 // GET / - list all products.
@@ -30,15 +28,11 @@ productRouter.get('/:id', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // GET /:categoryId - list products by category ID.
-productRouter.get('/category/:categoryId', validate(listProductsQuerySchema), asyncHandler(async (req: Request, res: Response) => {
-  logger.info(`Listing products for category ID: ${req.params.categoryId}`);
-  if (!req.params.categoryId) {
-    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
-  }
+productRouter.get('/category/categories', validate(listProductsQuerySchema, "query"), asyncHandler(async (req: Request, res: Response) => {
   const data = {
-    categoryId: req.params.categoryId,
-    limit: req.query.limit ? Number(req.query.limit) : 10,
-    page: req.query.page ? Number(req.query.page) : 1,
+    categoryId: req.query.categoryId! as string,
+    limit: parseInt(req.query.limit as string, 10),
+    page: parseInt(req.query.page as string, 10),
   };
   const products = await repo.listProductsByCategoryId(data);
   return res.status(200).json(products);
@@ -55,10 +49,6 @@ productRouter.put('/:id', validate(updateProductSchema), asyncHandler(async (req
   if (!req.params.id) {
     return res.status(400).json({ error: 'Bad Request', message: 'Product ID is required' });
   }
-  const existingProduct = await repo.listProductsByProductId(req.params.id);
-  if (!existingProduct) {
-    throw new NotFoundError('Product not found');
-  }
   const product = await repo.updateProduct(req.params.id, req.body);
   return res.status(200).json(product);
 }));
@@ -67,10 +57,6 @@ productRouter.put('/:id', validate(updateProductSchema), asyncHandler(async (req
 productRouter.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   if (!req.params.id) {
     return res.status(400).json({ error: 'Bad Request', message: 'Product ID is required' });
-  }
-  const existingProduct = await repo.listProductsByProductId(req.params.id);
-  if (!existingProduct) {
-    throw new NotFoundError('Product not found');
   }
   const product = await repo.deleteProduct(req.params.id);
   return res.status(200).json(product);

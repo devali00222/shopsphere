@@ -22,9 +22,13 @@ export async function createCategory(input: CreateCategoryInput) {
 
 // update by id
 export async function updateCategory(id: string, input: UpdateCategoryInput) {
+
   const category = await prisma.category.update({
     where: { id },
-    data: { input }
+    data: {
+      name: input.name!,
+      slug: input.slug!,
+    }
   });
   return category;
 }
