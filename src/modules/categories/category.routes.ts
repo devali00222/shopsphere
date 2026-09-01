@@ -11,9 +11,6 @@ export const categoryRouter = Router();
 // GET / - list all. 
 categoryRouter.get('/', asyncHandler(async (_req: Request, res: Response) => {
   const categories = await repo.listCategories();
-  if (!categories) {
-    throw new NotFoundError('Categories');
-  }
   return res.status(200).json(categories);
 }));
 
@@ -41,10 +38,6 @@ categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (r
   if (!req.params.id) {
     return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
   }
-  const existingCategory = await repo.getCategoryById(req.params.id);
-  if (!existingCategory) {
-    throw new NotFoundError('Category');
-  }
   const category = await repo.updateCategory(req.params.id, req.body);
   return res.status(200).json(category);
 }));
@@ -53,10 +46,6 @@ categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (r
 categoryRouter.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   if (!req.params.id) {
     return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
-  }
-  const existingCategory = await repo.getCategoryById(req.params.id);
-  if (!existingCategory) {
-    throw new NotFoundError('Category');
   }
   const category = await repo.deleteCategory(req.params.id);
   return res.status(200).json(category);
