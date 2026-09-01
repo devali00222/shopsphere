@@ -4,7 +4,7 @@ import { validate } from '../../middleware/validate';
 import { createCategorySchema, updateCategorySchema } from './category.schema';
 import * as repo from './category.repository';
 import asyncHandler from '../../middleware/asyncHandler';
-import { NotFoundError } from '../../infra/errors';
+import { BadRequestError, NotFoundError } from '../../infra/errors';
 
 export const categoryRouter = Router();
 
@@ -17,7 +17,7 @@ categoryRouter.get('/', asyncHandler(async (_req: Request, res: Response) => {
 // GET /:id - get one.
 categoryRouter.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   if (!req.params.id) {
-    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
+    throw new BadRequestError('Category ID is required');
   }
   const category = await repo.getCategoryById(req.params.id);
   if (!category) {
@@ -36,10 +36,10 @@ categoryRouter.post('/', validate(createCategorySchema), asyncHandler(async (req
 // PUT /:id - validate(updateCategorySchema), then update.
 categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (req: Request, res: Response) => {
   if (!req.params.id) {
-    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
+    throw new BadRequestError('Category ID is required');
   }
   if (!req.body.name && !req.body.slug) {
-    throw new NotFoundError('No data provided for update');
+    throw new BadRequestError('No data provided for update');
   }
   const category = await repo.updateCategory(req.params.id, req.body);
   return res.status(200).json(category);
@@ -48,7 +48,7 @@ categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (r
 // DELETE /:id - what status code, and does the response have a body?
 categoryRouter.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   if (!req.params.id) {
-    return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
+    throw new BadRequestError('Category ID is required');
   }
   const category = await repo.deleteCategory(req.params.id);
   return res.status(200).json(category);
