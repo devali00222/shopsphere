@@ -38,6 +38,9 @@ categoryRouter.put('/:id', validate(updateCategorySchema), asyncHandler(async (r
   if (!req.params.id) {
     return res.status(400).json({ error: 'Bad Request', message: 'Category ID is required' });
   }
+  if (!req.body.name && !req.body.slug) {
+    throw new NotFoundError('No data provided for update');
+  }
   const category = await repo.updateCategory(req.params.id, req.body);
   return res.status(200).json(category);
 }));
