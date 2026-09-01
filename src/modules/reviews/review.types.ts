@@ -5,6 +5,7 @@ export interface Review {
   rating: number;
   comment: string;
   // Embed a snapshot because the reviewer's display info should remain unchanged even if their profile changes later.
+  // Trade-off: name/avatar in old reviews won't reflect later profile updates — accepted since reviews are treated as a historical record, not a live profile field.
   reviewer: {
     userId: string;
     name: string;
