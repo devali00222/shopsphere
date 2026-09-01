@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { validate } from '../../middleware/validate';
-import { createProductSchema, listProductsQuerySchema, updateProductSchema } from './product.schema';
+import { createProductSchema, ListProductsQueryInput, listProductsQuerySchema, updateProductSchema } from './product.schema';
 import * as repo from './product.repository';
 import asyncHandler from '../../middleware/asyncHandler';
 import { BadRequestError, NotFoundError } from '../../infra/errors';
@@ -27,14 +27,14 @@ productRouter.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(product);
 }));
 
-// GET /:categoryId - list products by category ID.
+// GET /category/categories - list products by category ID.
 productRouter.get('/category/categories', validate(listProductsQuerySchema, "query"), asyncHandler(async (req: Request, res: Response) => {
   const data = {
-    categoryId: req.query.categoryId! as string,
-    limit: parseInt(req.query.limit as string, 10),
-    page: parseInt(req.query.page as string, 10),
+    categoryId: req.query.categoryId,
+    limit: req.query.limit,
+    page: req.query.page,
   };
-  const products = await repo.listProductsByCategoryId(data);
+  const products = await repo.listProductsByCategoryId(data as unknown as ListProductsQueryInput);
   return res.status(200).json(products);
 }));
 

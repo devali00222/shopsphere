@@ -77,7 +77,6 @@ export const listProductsQuerySchema = z.object({
     .int()
     .positive()
     .max(100)
-    .optional()
     .default(10),
 
   page: z
@@ -85,7 +84,7 @@ export const listProductsQuerySchema = z.object({
     .number()
     .int()
     .positive()
-    .optional()
+    .max(100)
     .default(1),
 });
 
